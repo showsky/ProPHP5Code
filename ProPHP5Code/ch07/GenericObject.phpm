@@ -1,0 +1,162 @@
+<?
+class GenericObject {
+
+  # Member Variables
+
+  private $id;
+  private $table_name;
+  
+  private $database_fields;
+  private $loaded;          
+  private $modified_fields
+  
+  # Methods
+
+  public function Reload() {           
+    $sql = new sql(0);
+    $id = $this->id;
+    $table_name = $this->table_name;
+    $sql->query("SELECT * FROM \"$table_name\" WHERE id='$id'");
+    $result_fields = $sql->get_row_hash(0);
+    $this->database_fields = $result_fields;
+    $this->loaded = 1;
+    if (sizeof($this->modified_fields) > 0) {
+      foreach ($this->modified_fields as $key => $value) {
+        $this->modified_fields[$key] = false;
+      };
+    };
+  }
+  
+  private function Load() {
+    $this->Reload();
+    $this->loaded = 1;
+  }
+  
+  public function ForceLoaded() {
+    $this->loaded = 1;
+  }
+    
+  public function GetField($field) {          
+    if ($this->loaded == 0) {
+      $this->Load();            
+    };
+    return $this->database_fields[$field];
+  }
+  
+  public function GetAllFields() {
+    if ($this->loaded == 0) {
+      $this->Load();            
+    };  
+    return($this->database_fields);
+  }
+  
+  public function GetID() {
+    return $this->id;
+  }
+
+  public function Initialize($table_name, $tuple_id = "") {
+    $this->table_name = $table_name;
+    $this->id = $tuple_id;
+  }
+
+  public function SetField($field, $value) {    
+    if ($this->loaded == 0) {
+      if ($this->id) {
+        $this->Load();            
+      };
+    };
+    $this->database_fields[$field] = $value;
+    $this->modified = 1;
+    $this->modified_fields[$field] = true;
+  }  
+  
+  public function Destroy() {
+    $id = $this->id;
+    $table_name = $this->table_name;
+    if ($id) {
+      $sql = new sql(0);
+      $stmt = "DELETE FROM \"" . $table_name . "\" WHERE id='" . $id . "'";
+      $sql->query($stmt);
+    };
+  }
+  
+  public function Save() {
+    $id = $this->id;
+    $table_name = $this->table_name;
+    $sql = new sql(0);
+    if (!$id) {
+      $this->loaded = 0;
+    };
+    if ($this->loaded == 0) {
+      # assume this is a new entity
+      $stmt = "INSERT INTO \"" . $table_name ."\"(";
+      foreach ($this->database_fields as $key => $value) {
+        if (!is_numeric($key)) {
+          $key = str_replace("'", "\'", $key);
+          if ($value != "") {
+            $stmt .= "\"$key\",";
+          };
+        };
+      };
+      # Chop last comma
+      $stmt = substr($stmt,0,strlen($stmt)-1);
+      $stmt .= ") VALUES (";
+      foreach ($this->database_fields as $key => $value) {
+        if (!is_numeric($key)) {
+          if ($value != "") {
+            $value = str_replace("'", "\'", $value);
+            $stmt .= "'$value',";
+          };
+        };
+      };
+      # Chop last comma
+      $stmt = substr($stmt,0,strlen($stmt)-1);
+      $stmt .= ")";      
+    } else {
+      $stmt = "UPDATE \"" . $table_name ."\" SET ";
+      foreach ($this->database_fields as $key => $value) {
+        if (!is_numeric($key)) {
+          if ($this->modified_fields[$key] == true) {
+            $value = str_replace("'", "\'", $value);
+            if ($value == "") {
+              $stmt .= "\"$key\" = NULL, ";
+            } else {
+              $stmt .= "\"$key\" = '$value', ";
+            };
+          };
+        };
+      };
+      # Chop last comma and space
+      $stmt = substr($stmt,0,strlen($stmt)-2);
+      $stmt .= " WHERE id='$id'";
+    };
+    $return_code = $sql->query($stmt, 1);    
+    if ($this->loaded == 0) {
+      # Try to get the ID of the new tuple.
+      $stmt = "SELECT MAX(id) AS id FROM \"$table_name\" WHERE ";
+      foreach ($this->database_fields as $key => $value) {
+        if (!is_numeric($key)) {
+          if ($value) {
+            if ($this->modified_fields[$key] == true) {
+              $value = str_replace("'", "\'", $value);
+              $stmt .= "\"$key\" = '$value' AND ";
+            };
+          };
+        };
+      };      
+      # Chop last " AND " (superfluous)
+      $stmt = substr($stmt,0,strlen($stmt)-5);
+      $sql->query($stmt);
+      $result_rows = $sql->get_table_hash();
+      $proposed_id = $result_rows[0]["id"];
+      if ($proposed_id > 0) {
+        $this->loaded = 1;
+        $this->id = $proposed_id;
+        return true;
+      } else {
+        return false;
+      };
+    };
+    return($return_code);
+  }
+};

@@ -1,0 +1,63 @@
+<?php
+
+class xdir {
+  
+  public $path;
+  public $entries = array();
+  public $counter = 0;
+  public $isRecursive;
+  
+  public function __construct($path, $recursive = false) {
+    if ((substr($path, strlen($path)-1, 1) == "/")  && (strlen($path) != 1)) {
+      $path = substr($path, 0, strlen($path)-1);
+    };
+    $this->path = $path;
+    $this->isRecursive = $recursive;
+    if ($this->path) {
+      $this->_getDirList($this->path);
+    };
+  }
+  
+  public function read() {
+    if ($this->counter <= (sizeof($this->entries)-1)) {
+      $s = ($this->entries[$this->counter]);
+      $this->counter++;
+      return($s);
+    } else {
+      return(false);
+    };
+  }
+  
+  public function isRecursive() {
+    return($this->isRecursive);
+  }
+  
+  public  function rewind() {
+    $this->counter = 0;
+    return(true);
+  }
+  
+  public  function close() {
+    return(true);
+  }
+
+  
+  public  function _getDirList ($dirName) { 
+    $objDir = dir($dirName); 
+    if ($objDir) {
+      while($strEntry = $objDir->read()) { 
+        if ($strEntry != "." && $strEntry != "..") { 
+          if (!(is_dir($dirName."/".$strEntry))) { 
+            array_push($this->entries, $dirName."/".$strEntry);
+          } else {
+            if ($this->isRecursive) {
+              $this->_getDirList($dirName."/".$strEntry, true); 
+            };
+          };
+        };
+      };
+      $objDir->close(); 
+    };
+  } 
+};
+?>

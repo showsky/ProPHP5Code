@@ -1,0 +1,47 @@
+<?xml version ='1.0' encoding ='UTF-8' ?> 
+<definitions name='greetings' 
+  targetNamespace='http://myserver.co.za/sayHello' 
+  xmlns:tns=' http://myserver.co.za/sayHello ' 
+  xmlns:soap='http://schemas.xmlsoap.org/wsdl/soap/' 
+  xmlns:xsd='http://www.w3.org/2001/XMLSchema' 
+  xmlns:soapenc='http://schemas.xmlsoap.org/soap/encoding/' 
+  xmlns:wsdl='http://schemas.xmlsoap.org/wsdl/' 
+  xmlns='http://schemas.xmlsoap.org/wsdl/'> 
+
+  <message name='sayHelloRequest'> 
+    <part name='name' type='xsd:string'/> 
+  </message> 
+  <message name='sayHelloResponse'> 
+    <part name='salutation' type='xsd:string'/> 
+  </message> 
+
+  <portType name='sayHelloPortType'> 
+    <operation name='sayHello'> 
+      <input message='tns:sayHelloRequest'/> 
+      <output message='tns:sayHelloResponse'/> 
+    </operation> 
+  </portType> 
+
+  <binding name='sayHelloBinding' type='tns:sayHelloPortType'> 
+    <soap:binding style='rpc' 
+      transport='http://schemas.xmlsoap.org/soap/http'/> 
+    <operation name='sayHello'> 
+      <soap:operation soapAction=''/> 
+      <input> 
+        <soap:body use='encoded' namespace='' 
+          encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/> 
+      </input> 
+      <output> 
+        <soap:body use='encoded' namespace='' 
+          encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/> 
+      </output> 
+    </operation> 
+  </binding> 
+  <documentation>This is Wiley's SOAP server Example</documentation>
+  <service name='sayHelloService'> 
+    <port name='sayHelloPort' binding='sayHelloBinding'> 
+      <soap:address location='http://localhost/prophp5/Soapxml/soapserver.php'/> 
+    </port> 
+  </service> 
+</definitions>
+ 

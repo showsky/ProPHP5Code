@@ -1,0 +1,140 @@
+<?php
+ class EmailCommunication extends Communication {
+  
+  private $objApparentSender;                    // Visible From: address
+  private $strSubjectLine;                      // Subject line  
+  private $objApparentPrimaryRecipient;          // Visible To: address    
+  private $arObjApparentSecondaryRecipients;    // Visible Cc: address(es)
+  
+  
+  public function __construct() {
+    // Superclass collection
+    $this->arRecipientCollection = new EmailRecipientCollection();
+    // Local collection of visible (CC:) recipients
+    $this->arObjApparentSecondaryRecipients = new EmailRecipientCollection();
+    parent::__construct();
+    
+  }
+  
+  public function setPrimaryRecipient($objRecipient) {
+    if (!($this->arRecipientCollection->exists(
+$objRecipient->getStringRepresentation()))) {
+      parent::addRecipient($objRecipient);
+    };
+    $this->objApparentPrimaryRecipient = $objRecipient->__clone();
+  }
+  
+  public function addCarbonRecipient($objRecipient) {
+    if (!($this->arRecipientCollection->exists(
+$objRecipient->getStringRepresentation()))) {
+      parent::addRecipient($objRecipient);
+    };
+    if (!($this->arObjApparentSecondaryRecipients->exists(
+$objRecipient->getStringRepresentation()))) {
+      $this->arObjApparentSecondaryRecipients->addItem(
+$objRecipient, $objRecipient->getStringRepresentation());
+    };
+  }
+  
+  public function removeCarbonRecipient($objRecipient) {
+    if ($this->arRecipientCollection->exists(
+$objRecipient->getStringRepresentation())) {
+      parent::removeRecipient($objRecipient);
+    };
+    if ($this->arObjApparentSecondaryRecipients->exists(
+$objRecipient->getStringRepresentation())) {
+      $this->arObjApparentSecondaryRecipients->removeItem(
+$objRecipient->getStringRepresentation());
+    };
+  }
+
+  public function addBlindRecipient($objRecipient) {
+    if (!($this->arRecipientCollection->exists(
+$objRecipient->getStringRepresentation()))) {
+      parent::addRecipient($objRecipient);
+    };
+  }
+
+  public function removeBlindRecipient($objRecipient) {
+    if (!($this->arRecipientCollection->exists(
+$objRecipient->getStringRepresentation()))) {
+      parent::removeRecipient($objRecipient->getStringRepresentation());
+    };
+  }
+  
+  public function setSubject($strSubject) {
+    $this->strSubjectLine = $strSubject;
+  }
+
+  public function setMessageBody($strMessageBody) {
+    $this->_setMessage($strMessageBody);
+  }
+
+  public function setSender($objSender) {
+    $this->objApparentSender = $objSender->__clone();
+  }
+
+  public function send() {
+    
+    // Establish headers
+    $strHeaders .= "From: " . $this->objApparentSender->getStringRepresentation() . "\n";
+    $strHeaders .= "To: " . 
+$this->objApparentPrimaryRecipient->getStringRepresentation() . "\n";
+    foreach ($this->arObjApparentSecondaryRecipients as $strRecipientIdentifier => $objEmailRecipient) {
+      $strHeaders .= "Cc: " . $objEmailRecipient->getStringRepresentation() . "\n";
+    };
+    $strHeaders .= "Date: " . date("D, M j H:i:s T Y O")  . "\n";
+    
+    // Establish body
+    $strBody = $this->_getMessage();
+    
+    // Pull together to form complete email, correctly formatted
+    $strFullEmail = $strHeaders . "\n" . $strBody;
+    
+
+    if (! ($smtp = new Net_SMTP("mail"))) {
+        $this->strErrorMessage = "Unable to instantiate Net_SMTP object";
+        $this->errorCode = 1;
+        return(false);
+    }
+    
+    if (PEAR::isError($e = $smtp->connect())) {
+        $this->strErrorMessage = $e->getMessage();
+        $this->errorCode = 2;
+        $smtp->disconnect();
+        return(false);
+    }
+    
+    if (PEAR::isError($smtp->mailFrom(
+$this->objApparentSender->getStringRepresentation()))) {
+        $this->strErrorMessage = "Unable to set sender";
+        $this->errorCode = 3;
+        $smtp->disconnect();
+        return(false);
+    }
+    
+    // Send to each recipient    
+    foreach ($this->arRecipientCollection as $strRecipientIdentifier => $objEmailRecipient) {
+      $strThisAddress = $objEmailRecipient->getRecipientAddress();
+      if (PEAR::isError($res = $smtp->rcptTo($strThisAddress))) {
+        $this->strErrorMessage = "Unable to add recipient " . $strThisAddress;
+        $this->errorCode = 4;
+        $smtp->disconnect();
+        return(false);
+      };
+    };
+
+    if (PEAR::isError($smtp->data($strFullEmail))) {
+        $this->strErrorMessage = "Unable to send data to server";
+        $this->errorCode = 5;
+        $smtp->disconnect();
+        return(false);
+    }
+    
+    $smtp->disconnect();
+    return(true);
+    
+  }
+};
+
+?>

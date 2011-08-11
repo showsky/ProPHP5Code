@@ -1,0 +1,21 @@
+<?
+class TemplatedEmailCommunication extends EmailCommunication {
+  
+  private $path_to_template_file;
+  private $objSmarty;
+  
+  public function __construct($strPathToTemplateFile) {
+    $this->objSmarty = new Smarty;
+    $this->path_to_template_file = $strPathToTemplateFile;
+    parent::__construct();
+  }
+  
+  public function setParameter($strParameter, $strValue) {
+    $this->objSmarty->assign($strParameter, $strValue);
+  }
+  
+  public function parse() {
+    $this->setMessageBody($this->objSmarty->fetch($this->path_to_template_file));
+  }  
+}
+?>

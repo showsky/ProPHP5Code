@@ -1,0 +1,7 @@
+<?
+class User extends GenericObject {
+ public function __construct($id) {
+         $this->initialize("user", $id);
+ }
+}
+?>

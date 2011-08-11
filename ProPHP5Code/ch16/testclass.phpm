@@ -1,0 +1,10 @@
+<?php
+class TestClass {
+ private $testVar;
+ 
+ function myMethod($strParam) {
+  $this->testVar = $strParam;
+  return('expected result');
+ }
+
+};

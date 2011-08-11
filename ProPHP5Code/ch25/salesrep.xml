@@ -1,0 +1,8 @@
+<report id="salesrep">
+ <criterion type="date" name="datefrom1" mandatory="true" caption="Date From (1)"/>
+ <criterion type="date" name="dateto1" mandatory="true" caption="Date To (1)"/>
+ <criterion type="date" name="datefrom2" mandatory="true" caption="Date From (2)"/>
+ <criterion type="date" name="dateto2" mandatory="true" caption="Date To (2)"/>
+ <criterion type="fkmultiple:author/id/author_name" name="authors" caption="Select Author(s)"/>
+ <criterion type="fkmultiple:publisher/id/publisher_name" name="publishers" caption="Select Publisher(s)"/>
+</report>

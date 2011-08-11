@@ -1,0 +1,26 @@
+<?php
+require_once("testclass.phpm");
+require_once("PHPUnit.php");
+class MyTestCase extends PHPUnit_TestCase
+{
+    var $objMyTestClass;
+
+    function __construct($name) {
+       $this->PHPUnit_TestCase($name);
+    }
+
+    function setUp() {
+        $this->objMyTestClass = new TestClass();
+    }
+
+    function tearDown() {
+        unset($this->objMyTestClass);
+    }
+
+    function testMyMethod() {
+        $actualResult = $this->objMyTestClass->myMethod('parameter');
+        $expectedResult = 'expected result';
+        $this->assertTrue($actualResult == $expectedResult);
+    }
+}
+?>

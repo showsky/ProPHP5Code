@@ -1,0 +1,17 @@
+<html>
+<head>
+	<title>Ed's Search Page</title>
+</head>
+
+<body>
+<H1>Search Results</H1>
+<hr>
+Here are the results of your search.
+<UL>
+<? for ($i=0; $i<=sizeof($displayHash["RESULTS"])-1; $i++) { ?>
+	<LI><?=$displayHash["RESULTS"][$i]?></LI>
+<? }; ?>
+</UL>
+<A HREF="search.php">Go back and search for more steaks!</A>
+</body>
+</html>

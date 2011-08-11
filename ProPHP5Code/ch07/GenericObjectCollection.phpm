@@ -1,0 +1,123 @@
+<?
+  class GenericObjectCollection {
+    
+    # Member Variables
+    var $table_name;
+    var $class_name;
+    
+    var $items_per_page;
+    var $item_count = 0;
+    
+    var $id_array;
+    
+    var $obj_array;
+    
+    function __construct($table_name, $class_name) {
+      $this->table_name = $table_name;
+      $this->class_name = $class_name;
+    }
+    
+    function AddTuple($id) {
+      if (!$this->id_array) {
+        $this->id_array = array();
+      };
+      array_push($this->id_array, $id);
+      $this->item_count = sizeof($this->id_array);
+    }
+    
+    function SetPageSize($items_per_page) {
+      $this->items_per_page = $items_per_page;
+    }
+    
+    function GetItemCount() {
+      return $this->item_count;
+    }
+    
+    function GetNumPages() {
+      return(ceil($this->item_count / $this->items_per_page));
+    }
+    
+    function _GetCommaSeparatedIDList($start_lim = 0, $end_lim = -1) {
+      $s = "";
+      if ($end_lim == -1) {
+        $end_lim = sizeof($this->id_array)-1;
+      };
+      for ($i=$start_lim; $i<=$end_lim; $i++) {
+        if (is_numeric($this->id_array[$i])) {
+          $s = $s . $this->id_array[$i] . ",";
+        };
+      };
+      $s = substr($s, 0, strlen($s) - 1);
+      return $s;
+    }
+    
+    function _GetIndexFromTupleID($tuple_id) {
+      $index = -1;
+      for ($i=0; $i<=sizeof($this->id_array)-1; $i++) {
+        if ($this->id_array[$i] == $tuple_id) {
+          $index = $i;
+        };
+      };
+      return $index;
+    }
+    
+    function PopulateObjectArray($page_num = 0) {
+      $items_per_page = $this->items_per_page;
+      if ($this->item_count > 0) {
+        if ($page_num > 0) {
+          $start_lim = ($items_per_page * ($page_num - 1));
+          $end_lim = ($start_lim + $items_per_page) - 1;
+          if ($end_lim > ($this->item_count-1)) {
+            $end_lim = $this->item_count - 1;
+          };
+          $stmt = "SELECT * FROM \"" . $this->table_name . "\" WHERE id IN (" . $this->_GetCommaSeparatedIDList($start_lim, $end_lim). ")";
+        } else {
+          $stmt = "SELECT * FROM \"" . $this->table_name . "\" WHERE id IN (" . $this->_GetCommaSeparatedIDList(). ")";
+        };
+        # Perform SQL query 
+        $sql = new sql(0);
+        $sql->query($stmt);        
+        $result_rows = $sql->get_table_hash();
+        
+        for ($i=0; $i<=sizeof($result_rows)-1; $i++) {
+          $this_row = $result_rows[$i];
+          $this_db_row_id = $this_row["id"];
+          $this_index = $this->_GetIndexFromTupleID($this_db_row_id);
+          if ($this_index >= 0) {
+            $refObjArrayIndexObj = &$this->obj_array[$this_index];
+            $s = "\$refObjArrayIndexObj = new " . $this->class_name . "(" . $this_db_row_id . ");";
+            eval($s);
+            $refObjArrayIndexObj->ForceLoaded();
+            foreach ($this_row as $key => $value) {
+              if (!(is_numeric($key))) {
+                $refObjArrayIndexObj->SetField($key, $value);
+              };
+            };
+          };
+        };
+      };
+    }
+    
+    function RetrievePopulatedObjects($page_num = 0) {
+      if ($page_num > 0) {
+        $items_per_page = $this->items_per_page;
+        # Calculate start and end limits from page number.
+        $start_lim = ($items_per_page * ($page_num - 1));
+        $end_lim = ($start_lim + $items_per_page) - 1;
+          if ($end_lim > ($this->item_count-1)) {
+            $end_lim = $this->item_count - 1;
+          };        
+      } else {
+        $start_lim = 0;
+        $end_lim = $this->item_count - 1;
+      };
+      $return_array = array();
+      $counter = 0;
+      for ($i=$start_lim; $i<=$end_lim; $i++) {
+        $return_array[$counter] = $this->obj_array[$i];
+        $counter++;
+      };
+      return($return_array);
+    }
+  }
+?>

@@ -1,0 +1,49 @@
+class sql {
+  private $result_rows;  # Result rows hash
+  private $query_handle;  # db: the query handle
+  private $link_ident;  # db: the link identifier
+  
+  public function __construct() {
+    $db_username = "gobjtest";
+    $db_password = "";
+    $db_host = "db";
+    $db_name = "gobjtest";
+    $this->link_ident = pg_Connect("user='$db_username' password='$db_password' dbname='$db_name' host='$db_host'");
+  }
+  
+  public function query($sql, $code_return_mode = 0) {
+    $q_handle = pg_exec($this->link_ident, $sql);
+    
+    for ($i=0; $i<=pg_numrows($q_handle)-1; $i++) {
+      $result = pg_fetch_array($q_handle,$i);  
+      $return_array[$i] = $result;
+    };
+    if (!$q_handle) {
+      error_log("QUERY FAILED: $sql\n");
+    };
+    $this->result_rows = $return_array;
+    if (!$q_handle) {
+      return(1);
+    } else {
+      return(0);  # return 0 if it fails
+    };
+  }
+  
+  public function get_result($row_num, $column_name) {
+    return ($this->result_rows[$row_num][$column_name]);
+  }
+  
+  public function get_row_hash($row_num) {
+    return ($this->result_rows[$row_num]);
+  }  
+  
+  public function get_table_hash() {
+    return $this->result_rows;
+  }
+  
+  public function done($close_connection = 0) {
+    if ($close_connection) {
+      pg_Close($this->link_ident);
+    };
+  }
+};

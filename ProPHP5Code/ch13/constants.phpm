@@ -1,0 +1,18 @@
+<?php
+// Constants
+
+define("VERB_METHOD_COOKIE", 1);
+define("VERB_METHOD_GET", 2);
+define("VERB_METHOD_POST", 4);
+
+define("CT_MINLENGTH", 1);
+define("CT_MAXLENGTH", 2);
+define("CT_PERMITTEDCHARACTERS", 3);
+define("CT_NONPERMITTEDCHARACTERS", 4);
+define("CT_LESSTHAN", 5);
+define("CT_EQUALTO", 6);
+define("CT_MORETHAN", 7);
+define("CT_NOTEQUALTO", 8);
+define("CT_MUSTMATCHREGEXP", 9);
+define("CT_MUSTNOTMATCHREGEXP", 10);
+?>

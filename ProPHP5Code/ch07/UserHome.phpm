@@ -1,0 +1,47 @@
+<?
+require_once("GenericObject.phpm");
+require_once("GenericObjectCollection.phpm");
+require_once("User.phpm");
+
+class UserHome {
+
+  var $items_per_page = 12;
+  var $item_count;
+  var $page_count;
+  
+  public function __construct() {
+    return(true);  # No useful constructor in a Home Class
+  }
+  
+  public function SetItemsPerPage($items_per_page) {
+    $this->items_per_page = $items_per_page;
+  }
+  
+  public function GetItemCount() {
+    return ($this->item_count);
+  }
+
+  public function GetPageCount() {
+    return ($this->page_count);
+  }
+
+  public function GetAllUsersWithFirstNameBeginningWith($strLetter, $page_num=1) {
+    $dbc = new GenericObjectCollection("user", "User");
+    $sql = new sql();
+    $strLetter = strtolower($strLetter);
+    $sql->query("SELECT id FROM \"user\" WHERE lower(first_name) LIKE '$strLetter%'");  
+    $result_rows = $sql->get_table_hash();
+    for ($i=0; $i<=sizeof($result_rows)-1; $i++) {
+      $dbc->AddTuple($result_rows[$i]["id"]);
+    };
+    $dbc->SetPageSize($this->items_per_page);
+    $dbc->PopulateObjectArray($page_num);
+    $objArray = $dbc->RetrievePopulatedObjects($page_num);
+    
+    $this->item_count = $dbc->GetItemCount();
+    $this->page_count = $dbc->GetNumPages();
+    
+    return($objArray);
+  }
+}
+?>
